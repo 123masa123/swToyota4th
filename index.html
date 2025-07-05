@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎰 ノリ打ちマッチング！</title>
+    <title>🎰 ノリ打ちマッチング</title>
     <style>
         * {
             margin: 0;
@@ -456,20 +456,7 @@
             </div>
 
             <div id="request-list">
-                <!-- デモ募集（ZENTパチンコ店） -->
-                <div class="card request-card">
-                    <div class="request-header">
-                        <div>
-                            <div class="request-budget">💰 ¥15,000</div>
-                            <div class="request-meta">
-                                <span class="badge badge-secondary">📍 約2.1km</span>
-                                <span class="badge badge-outline">⏰ 5分前</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="request-message">💬 豊田市ZENTで一緒に打ちませんか？初心者歓迎です！</div>
-                    <button class="btn btn-success" onclick="acceptRequest('demo-zent-toyota')">この募集に参加する</button>
-                </div>
+                <!-- 動的に生成される募集リスト -->
             </div>
 
             <div id="empty-state" style="display: none;">
@@ -545,6 +532,9 @@
             // UI更新
             document.getElementById('matching-controls').style.display = 'none';
             document.getElementById('matching-status').style.display = 'block';
+            
+            // 受け手側のリストも更新（追加）
+            updateRequestList();
         }
 
         // マッチング停止
@@ -592,7 +582,57 @@
             } else {
                 requestList.style.display = 'block';
                 emptyState.style.display = 'none';
+                
+                // 募集リストを動的に生成
+                requestList.innerHTML = activeRequests.map(request => {
+                    const timeAgo = getTimeAgo(request.timestamp);
+                    const distance = calculateDistance(35.0828, 137.1564, request.location.lat, request.location.lng);
+                    
+                    return `
+                        <div class="card request-card">
+                            <div class="request-header">
+                                <div>
+                                    <div class="request-budget">💰 ¥${request.budget.toLocaleString()}</div>
+                                    <div class="request-meta">
+                                        <span class="badge badge-secondary">📍 約${distance.toFixed(1)}km</span>
+                                        <span class="badge badge-outline">⏰ ${timeAgo}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            ${request.message ? `<div class="request-message">💬 ${request.message}</div>` : ''}
+                            <button class="btn btn-success" onclick="acceptRequest('${request.id}')">この募集に参加する</button>
+                        </div>
+                    `;
+                }).join('');
             }
+        }
+
+        // 距離計算（簡易版）
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371; // 地球の半径（km）
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // 時間差を計算
+        function getTimeAgo(timestamp) {
+            const now = new Date();
+            const diff = now - timestamp;
+            const minutes = Math.floor(diff / (1000 * 60));
+            
+            if (minutes < 1) return 'たった今';
+            if (minutes < 60) return `${minutes}分前`;
+            
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}時間前`;
+            
+            const days = Math.floor(hours / 24);
+            return `${days}日前`;
         }
 
         // 通知表示更新
