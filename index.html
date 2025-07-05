@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎰 ノリ打ちマッチング</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #fef2f2 0%, #fef3c7 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 1rem;
+            min-height: 100vh;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-top: 1rem;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+
+        .back-btn:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .card-icon {
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+        }
+
+        .blue-icon {
+            background-color: #dbeafe;
+            color: #2563eb;
+        }
+
+        .green-icon {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-description {
+            text-align: center;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #1d4ed8;
+        }
+
+        .btn-success {
+            background-color: #16a34a;
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background-color: #15803d;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #d1d5db;
+            color: #374151;
+        }
+
+        .btn-outline:hover {
+            background-color: #f9fafb;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input, .textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .input:focus, .textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .map-container {
+            background: #f3f4f6;
+            border-radius: 0.5rem;
+            height: 12rem;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #dbeafe 0%, #dcfce7 100%);
+        }
+
+        .map-point {
+            position: absolute;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .map-point.user {
+            background-color: #2563eb;
+            animation: pulse 2s infinite;
+        }
+
+        .map-point.request {
+            background-color: #dc2626;
+            animation: pulse 2s infinite;
+        }
+
+        .map-point.zent {
+            background-color: #dc2626;
+            width: 2rem;
+            height: 2rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .map-legend {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+
+        .badge-secondary {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .badge-outline {
+            border: 1px solid #d1d5db;
+            background-color: transparent;
+            color: #374151;
+        }
+
+        .notification {
+            background-color: #dcfce7;
+            border: 1px solid #bbf7d0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .notification-title {
+            color: #166534;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .notification-item {
+            background: white;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .matching-status {
+            background-color: #dbeafe;
+            border: 1px solid #93c5fd;
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .matching-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            animation: pulse 1s infinite;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .request-card {
+            border: 1px solid #bbf7d0;
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .request-budget {
+            font-size: 1.25rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .request-meta {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .request-message {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .location-info {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .home-info {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- ホーム画面 -->
+    <div id="home-page" class="page active">
+        <div class="container">
+            <div class="title">🎰 ノリ打ちマッチング</div>
+            <div class="subtitle">パチンコ仲間を見つけよう！</div>
+
+            <div class="card" onclick="showPage('seeker-page')">
+                <div class="card-icon blue-icon">🔍</div>
+                <div class="card-title">ノリ打ち相手を探す</div>
+                <div class="card-description">一緒にパチンコを打つ仲間を募集する</div>
+                <button class="btn btn-primary">相手を探す</button>
+            </div>
+
+            <div class="card" onclick="showPage('receiver-page')">
+                <div class="card-icon green-icon">👥</div>
+                <div class="card-title">ノリ打ちに参加する</div>
+                <div class="card-description">近くの募集に参加して一緒に打つ</div>
+                <button class="btn btn-success">募集を見る</button>
+            </div>
+
+            <div class="home-info">
+                位置情報を使用して半径10km以内のユーザーとマッチングします
+            </div>
+        </div>
+    </div>
+
+    <!-- マッチング希望者ページ -->
+    <div id="seeker-page" class="page">
+        <div class="container">
+            <div class="header">
+                <button class="back-btn" onclick="showPage('home-page')">←</button>
+                <h1>ノリ打ち相手を探す</h1>
+            </div>
+
+            <div id="notifications" style="display: none;" class="notification">
+                <div class="notification-title">🎉 マッチング通知</div>
+                <div id="notification-list"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📍 現在地</div>
+                <div class="location-info">位置情報を取得しました（半径10km以内でマッチング）</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">募集内容</div>
+                <div class="form-group">
+                    <label class="label" for="budget">💰 予算（円）</label>
+                    <input type="number" id="budget" class="input" placeholder="10000">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="message">メッセージ（任意）</label>
+                    <textarea id="message" class="textarea" placeholder="一緒に楽しく打ちましょう！"></textarea>
+                </div>
+            </div>
+
+            <div id="matching-controls">
+                <button id="start-matching" class="btn btn-primary" style="height: 3rem; font-size: 1.125rem;" onclick="startMatching()">
+                    🔍 マッチング開始
+                </button>
+            </div>
+
+            <div id="matching-status" style="display: none;">
+                <div class="card matching-status">
+                    <div class="matching-icon">⏰</div>
+                    <div style="font-weight: 500; color: #1e40af; margin-bottom: 0.5rem;">マッチング中...</div>
+                    <div style="font-size: 0.875rem; color: #2563eb;">近くのユーザーに募集を送信しています</div>
+                </div>
+                <button class="btn btn-outline" onclick="stopMatching()">マッチングを停止</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- マッチング受け手ページ -->
+    <div id="receiver-page" class="page">
+        <div class="container">
+            <div class="header">
+                <button class="back-btn" onclick="showPage('home-page')">←</button>
+                <h1>ノリ打ち募集一覧</h1>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📍 現在地周辺の募集</div>
+                <div class="location-info">半径10km以内の募集を表示しています</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📍 募集地点マップ</div>
+                <div class="map-container">
+                    <!-- ZENTパチンコ店 -->
+                    <div class="map-point zent" style="left: 70%; top: 30%;" title="豊田市ZENTパチンコ店 - 予算: ¥15,000">🎰</div>
+                    <!-- あなたの位置 -->
+                    <div class="map-point user" style="left: 50%; top: 50%;"></div>
+                    <div class="map-legend">🔵 あなた　🔴 募集中　🎰 ZENT</div>
+                </div>
+            </div>
+
+            <div id="request-list">
+                <!-- デモ募集（ZENTパチンコ店） -->
+                <div class="card request-card">
+                    <div class="request-header">
+                        <div>
+                            <div class="request-budget">💰 ¥15,000</div>
+                            <div class="request-meta">
+                                <span class="badge badge-secondary">📍 約2.1km</span>
+                                <span class="badge badge-outline">⏰ 5分前</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="request-message">💬 豊田市ZENTで一緒に打ちませんか？初心者歓迎です！</div>
+                    <button class="btn btn-success" onclick="acceptRequest('demo-zent-toyota')">この募集に参加する</button>
+                </div>
+            </div>
+
+            <div id="empty-state" style="display: none;">
+                <div class="card">
+                    <div class="empty-state">
+                        <div class="empty-icon">👥</div>
+                        <div style="margin-bottom: 0.5rem;">現在、近くに募集はありません</div>
+                        <div style="font-size: 0.875rem;">しばらく待つか、自分で募集してみましょう</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // アプリケーション状態
+        let appState = {
+            currentPage: 'home-page',
+            isMatching: false,
+            matchingRequests: [
+                {
+                    id: 'demo-zent-toyota',
+                    budget: 15000,
+                    message: '豊田市ZENTで一緒に打ちませんか？初心者歓迎です！',
+                    location: { lat: 35.085, lng: 137.158 },
+                    timestamp: new Date(Date.now() - 5 * 60 * 1000),
+                    status: 'active'
+                }
+            ],
+            notifications: []
+        };
+
+        // ページ切り替え
+        function showPage(pageId) {
+            // 全てのページを非表示
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // 指定されたページを表示
+            document.getElementById(pageId).classList.add('active');
+            appState.currentPage = pageId;
+
+            // ページ固有の初期化
+            if (pageId === 'receiver-page') {
+                updateRequestList();
+            }
+        }
+
+        // マッチング開始
+        function startMatching() {
+            const budget = document.getElementById('budget').value;
+            const message = document.getElementById('message').value;
+
+            if (!budget) {
+                alert('予算を入力してください');
+                return;
+            }
+
+            // 新しい募集を追加
+            const newRequest = {
+                id: Date.now().toString(),
+                budget: parseInt(budget),
+                message: message,
+                location: { lat: 35.0828, lng: 137.1564 }, // 豊田市
+                timestamp: new Date(),
+                status: 'active'
+            };
+
+            appState.matchingRequests.push(newRequest);
+            appState.isMatching = true;
+
+            // UI更新
+            document.getElementById('matching-controls').style.display = 'none';
+            document.getElementById('matching-status').style.display = 'block';
+        }
+
+        // マッチング停止
+        function stopMatching() {
+            appState.isMatching = false;
+            document.getElementById('matching-controls').style.display = 'block';
+            document.getElementById('matching-status').style.display = 'none';
+        }
+
+        // 募集を受ける
+        function acceptRequest(requestId) {
+            const request = appState.matchingRequests.find(r => r.id === requestId);
+            
+            if (request) {
+                // 募集のステータスを更新
+                request.status = 'matched';
+
+                // 通知を追加
+                const notification = {
+                    id: Date.now().toString(),
+                    message: `あなたの募集（予算¥${request.budget.toLocaleString()}）にマッチングがありました！`,
+                    timestamp: new Date(),
+                    requestId: requestId
+                };
+
+                appState.notifications.push(notification);
+
+                // UI更新
+                updateRequestList();
+                alert('マッチングが成立しました！募集者に通知を送信しました。');
+            }
+        }
+
+        // 募集リスト更新
+        function updateRequestList() {
+            const requestList = document.getElementById('request-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            // アクティブな募集をフィルタ
+            const activeRequests = appState.matchingRequests.filter(r => r.status === 'active');
+
+            if (activeRequests.length === 0) {
+                requestList.style.display = 'none';
+                emptyState.style.display = 'block';
+            } else {
+                requestList.style.display = 'block';
+                emptyState.style.display = 'none';
+            }
+        }
+
+        // 通知表示更新
+        function updateNotifications() {
+            const notificationsDiv = document.getElementById('notifications');
+            const notificationList = document.getElementById('notification-list');
+
+            if (appState.notifications.length > 0) {
+                notificationsDiv.style.display = 'block';
+                notificationList.innerHTML = appState.notifications.map(notification => `
+                    <div class="notification-item">
+                        <div style="font-weight: 500;">${notification.message}</div>
+                        <div style="font-size: 0.875rem; color: #6b7280;">${notification.timestamp.toLocaleTimeString()}</div>
+                    </div>
+                `).join('');
+            } else {
+                notificationsDiv.style.display = 'none';
+            }
+        }
+
+        // 定期的に通知をチェック
+        setInterval(() => {
+            if (appState.currentPage === 'seeker-page') {
+                updateNotifications();
+            }
+        }, 1000);
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎰 ノリ打ちマッチングアプリが起動しました');
+        });
+    </script>
+</body>
+</html>
